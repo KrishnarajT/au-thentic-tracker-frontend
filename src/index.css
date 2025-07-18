@@ -42,6 +42,9 @@ All colors MUST be HSL.
     --success: 142 76% 36%;
     --success-foreground: 355.7 100% 97.3%;
 
+    --chart-1: 45 93% 47%;
+    --chart-2: 142 76% 36%;
+
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
@@ -97,6 +100,8 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --chart-1: 45 93% 47%;
+    --chart-2: 142 76% 36%;
   }
 }
 
