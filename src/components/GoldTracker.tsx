@@ -5,18 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Plus, Trash2, TrendingUp, RefreshCw, Settings } from "lucide-react";
+import { Plus, Trash2, TrendingUp, RefreshCw, Settings, Calendar, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { goldPurchaseApi, goldPriceApi } from "@/services/goldApi";
 import { GoldPurchase } from "@/types/gold";
 import { formatCurrency, formatWeight, formatPercentage, CurrencyFormat } from "@/utils/formatters";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { calculateGoldXIRR } from "@/utils/xirr";
 
 const GoldTracker = () => {
   const [purchases, setPurchases] = useState<GoldPurchase[]>([]);
   const [currentGoldPrice, setCurrentGoldPrice] = useState<number>(0);
+  const [lastMonthGoldPrice, setLastMonthGoldPrice] = useState<number>(0);
   const [currencyFormat, setCurrencyFormat] = useState<CurrencyFormat>('normal');
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  const [isLoadingHistoricalPrice, setIsLoadingHistoricalPrice] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [newPurchase, setNewPurchase] = useState({
     grams: "",
@@ -29,6 +32,7 @@ const GoldTracker = () => {
   useEffect(() => {
     loadPurchases();
     fetchCurrentGoldPrice();
+    fetchLastMonthGoldPrice();
   }, []);
 
   const loadPurchases = async () => {
@@ -66,6 +70,26 @@ const GoldTracker = () => {
       });
     }
     setIsLoadingPrice(false);
+  };
+
+  const fetchLastMonthGoldPrice = async () => {
+    setIsLoadingHistoricalPrice(true);
+    const result = await goldPriceApi.getHistoricalPrice(30);
+    
+    if (result.success && result.data) {
+      setLastMonthGoldPrice(result.data);
+      toast({
+        title: "Historical Price Updated",
+        description: `30-day old gold price: ₹${result.data.toFixed(2)}/g`,
+      });
+    } else {
+      toast({
+        title: "Historical Price Fetch Failed",
+        description: "Please enter manually",
+        variant: "destructive"
+      });
+    }
+    setIsLoadingHistoricalPrice(false);
   };
 
   const addPurchase = async () => {
@@ -147,12 +171,30 @@ const GoldTracker = () => {
     }
   };
 
+  // Basic calculations
   const totalGrams = purchases.reduce((sum, p) => sum + p.grams, 0);
   const totalInvested = purchases.reduce((sum, p) => sum + p.amountPaid, 0);
   const averagePricePerGram = totalGrams > 0 ? totalInvested / totalGrams : 0;
   const currentValue = totalGrams * currentGoldPrice;
   const totalReturn = currentValue - totalInvested;
   const returnPercentage = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
+
+  // KPI calculations
+  const lastMonthValue = totalGrams * lastMonthGoldPrice;
+  const monthlyReturn = currentValue - lastMonthValue;
+  const monthlyReturnPercentage = lastMonthValue > 0 ? (monthlyReturn / lastMonthValue) * 100 : 0;
+
+  // Get last investment date and calculate returns since then
+  const sortedPurchases = [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const lastInvestmentDate = sortedPurchases.length > 0 ? sortedPurchases[0].date : null;
+  const lastInvestmentPrice = sortedPurchases.length > 0 ? sortedPurchases[0].pricePerGram : 0;
+  const returnSinceLastInvestment = lastInvestmentPrice > 0 ? currentGoldPrice - lastInvestmentPrice : 0;
+  const returnSinceLastInvestmentPercentage = lastInvestmentPrice > 0 ? (returnSinceLastInvestment / lastInvestmentPrice) * 100 : 0;
+
+  // XIRR calculations
+  const totalXIRR = calculateGoldXIRR(purchases, currentGoldPrice) * 100;
+  const monthlyXIRR = lastMonthGoldPrice > 0 ? calculateGoldXIRR(purchases, lastMonthGoldPrice, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) * 100 : 0;
+  const sinceLastInvestmentXIRR = lastInvestmentDate ? calculateGoldXIRR(purchases, currentGoldPrice, new Date()) * 100 : 0;
 
   // Prepare chart data
   const chartData = purchases
@@ -257,43 +299,137 @@ const GoldTracker = () => {
                 {formatCurrency(totalReturn, currencyFormat)}
                 <span className="text-sm">({formatPercentage(returnPercentage)})</span>
               </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                XIRR: {formatPercentage(totalXIRR)}
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Current Gold Price Input */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Gold Price</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4 items-end">
-              <div className="flex-1">
-                <label className="text-sm font-medium text-muted-foreground">Price per gram (₹)</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={currentGoldPrice}
-                  onChange={(e) => setCurrentGoldPrice(parseFloat(e.target.value) || 0)}
-                  placeholder="Enter current gold price per gram"
-                  className="mt-1"
-                />
+        {/* Advanced KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-primary/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                30-Day Returns
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-xl font-bold flex items-center gap-1 ${monthlyReturn >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {formatCurrency(monthlyReturn, currencyFormat)}
+                <span className="text-sm">({formatPercentage(monthlyReturnPercentage)})</span>
               </div>
-              <Button 
-                onClick={fetchCurrentGoldPrice} 
-                disabled={isLoadingPrice}
-                variant="outline"
-                size="sm"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingPrice ? 'animate-spin' : ''}`} />
-                {isLoadingPrice ? 'Fetching...' : 'Fetch Price'}
-              </Button>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs text-muted-foreground mt-1">
+                XIRR: {formatPercentage(monthlyXIRR)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-primary/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Target className="w-4 h-4" />
+                Since Last Investment
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-xl font-bold flex items-center gap-1 ${returnSinceLastInvestment >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {formatCurrency(returnSinceLastInvestment, currencyFormat)}/g
+                <span className="text-sm">({formatPercentage(returnSinceLastInvestmentPercentage)})</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {lastInvestmentDate && `Since ${lastInvestmentDate}`}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                XIRR: {formatPercentage(sinceLastInvestmentXIRR)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-primary/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Portfolio XIRR</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-xl font-bold ${totalXIRR >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {formatPercentage(totalXIRR)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Annualized Return Rate
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Gold Price Inputs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Gold Price</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-muted-foreground">Price per gram (₹)</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={currentGoldPrice}
+                    onChange={(e) => setCurrentGoldPrice(parseFloat(e.target.value) || 0)}
+                    placeholder="Enter current gold price per gram"
+                    className="mt-1"
+                  />
+                </div>
+                <Button 
+                  onClick={fetchCurrentGoldPrice} 
+                  disabled={isLoadingPrice}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingPrice ? 'animate-spin' : ''}`} />
+                  {isLoadingPrice ? 'Fetching...' : 'Fetch Price'}
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground mt-2">
                 Your average: {formatCurrency(averagePricePerGram, currencyFormat)}/g
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>30-Day Old Gold Price</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-muted-foreground">Price per gram (₹)</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={lastMonthGoldPrice}
+                    onChange={(e) => setLastMonthGoldPrice(parseFloat(e.target.value) || 0)}
+                    placeholder="Enter gold price from 30 days ago"
+                    className="mt-1"
+                  />
+                </div>
+                <Button 
+                  onClick={fetchLastMonthGoldPrice} 
+                  disabled={isLoadingHistoricalPrice}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingHistoricalPrice ? 'animate-spin' : ''}`} />
+                  {isLoadingHistoricalPrice ? 'Fetching...' : 'Fetch Historical'}
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground mt-2">
+                For 30-day return calculation
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Investment Progress Chart */}
         {chartData.length > 0 && (

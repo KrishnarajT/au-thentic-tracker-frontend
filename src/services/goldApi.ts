@@ -161,6 +161,64 @@ export const goldPriceApi = {
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   },
+
+  getHistoricalPrice: async (daysBack: number): Promise<ApiResponse<number>> => {
+    try {
+      // Try your custom API first
+      try {
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() - daysBack);
+        const dateStr = targetDate.toISOString().split('T')[0];
+        
+        const response = await fetch(`${API_BASE_URL}/gold-price/historical?date=${dateStr}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return { success: true, data: data.pricePerGram };
+        }
+      } catch (error) {
+        console.warn('Custom historical gold price API failed:', error);
+      }
+      
+      // For now, return a fallback (you can enhance this with a real historical API)
+      return { success: false, error: 'Historical price API not available' };
+    } catch (error) {
+      console.warn('Failed to fetch historical gold price from API:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  },
+
+  getPriceAtDate: async (date: string): Promise<ApiResponse<number>> => {
+    try {
+      // Try your custom API first
+      try {
+        const response = await fetch(`${API_BASE_URL}/gold-price/historical?date=${date}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return { success: true, data: data.pricePerGram };
+        }
+      } catch (error) {
+        console.warn('Custom historical gold price API failed for date:', date, error);
+      }
+      
+      // For now, return a fallback (you can enhance this with a real historical API)
+      return { success: false, error: 'Historical price API not available' };
+    } catch (error) {
+      console.warn('Failed to fetch gold price for date from API:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  },
 };
 
 // Settings API (for storing user preferences like currency, etc.)
