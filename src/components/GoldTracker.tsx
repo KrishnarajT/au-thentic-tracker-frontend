@@ -5,13 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Plus, Trash2, TrendingUp, RefreshCw, Settings, Calendar, Target } from "lucide-react";
+import { Plus, Trash2, TrendingUp, RefreshCw, Settings, Calendar, Target, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { goldPurchaseApi, goldPriceApi } from "@/services/goldApi";
 import { GoldPurchase } from "@/types/gold";
 import { formatCurrency, formatWeight, formatPercentage, CurrencyFormat } from "@/utils/formatters";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Legend } from "recharts";
 import { calculateGoldXIRR } from "@/utils/xirr";
+
+type SortField = 'date' | 'grams' | 'amountPaid' | 'pricePerGram' | 'currentValue' | 'return';
+type SortDirection = 'asc' | 'desc';
 
 const GoldTracker = () => {
   const [purchases, setPurchases] = useState<GoldPurchase[]>([]);
@@ -21,6 +24,8 @@ const GoldTracker = () => {
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const [isLoadingHistoricalPrice, setIsLoadingHistoricalPrice] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [newPurchase, setNewPurchase] = useState({
     grams: "",
     amountPaid: "",
@@ -185,9 +190,9 @@ const GoldTracker = () => {
   const monthlyReturnPercentage = lastMonthValue > 0 ? (monthlyReturn / lastMonthValue) * 100 : 0;
 
   // Get last investment date and calculate returns since then
-  const sortedPurchases = [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const lastInvestmentDate = sortedPurchases.length > 0 ? sortedPurchases[0].date : null;
-  const lastInvestmentPrice = sortedPurchases.length > 0 ? sortedPurchases[0].pricePerGram : 0;
+  const purchasesByDate = [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const lastInvestmentDate = purchasesByDate.length > 0 ? purchasesByDate[0].date : null;
+  const lastInvestmentPrice = purchasesByDate.length > 0 ? purchasesByDate[0].pricePerGram : 0;
   const returnSinceLastInvestment = lastInvestmentPrice > 0 ? currentGoldPrice - lastInvestmentPrice : 0;
   const returnSinceLastInvestmentPercentage = lastInvestmentPrice > 0 ? (returnSinceLastInvestment / lastInvestmentPrice) * 100 : 0;
 
@@ -195,6 +200,55 @@ const GoldTracker = () => {
   const totalXIRR = calculateGoldXIRR(purchases, currentGoldPrice) * 100;
   const monthlyXIRR = lastMonthGoldPrice > 0 ? calculateGoldXIRR(purchases, lastMonthGoldPrice, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) * 100 : 0;
   const sinceLastInvestmentXIRR = lastInvestmentDate ? calculateGoldXIRR(purchases, currentGoldPrice, new Date()) * 100 : 0;
+
+  // Sorting function
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Sort purchases based on current sort field and direction
+  const sortedPurchases = [...purchases].sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortField) {
+      case 'date':
+        aValue = new Date(a.date);
+        bValue = new Date(b.date);
+        break;
+      case 'grams':
+        aValue = a.grams;
+        bValue = b.grams;
+        break;
+      case 'amountPaid':
+        aValue = a.amountPaid;
+        bValue = b.amountPaid;
+        break;
+      case 'pricePerGram':
+        aValue = a.pricePerGram;
+        bValue = b.pricePerGram;
+        break;
+      case 'currentValue':
+        aValue = a.grams * currentGoldPrice;
+        bValue = b.grams * currentGoldPrice;
+        break;
+      case 'return':
+        aValue = (a.grams * currentGoldPrice) - a.amountPaid;
+        bValue = (b.grams * currentGoldPrice) - b.amountPaid;
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   // Prepare chart data
   const chartData = purchases
@@ -546,17 +600,101 @@ const GoldTracker = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Grams</TableHead>
-                    <TableHead>Amount Paid</TableHead>
-                    <TableHead>Price/Gram</TableHead>
-                    <TableHead>Current Value</TableHead>
-                    <TableHead>Return</TableHead>
+                    <TableHead>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleSort('date')}
+                        className="h-auto p-0 font-semibold hover:bg-transparent"
+                      >
+                        Date
+                        {sortField === 'date' ? (
+                          sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
+                        ) : (
+                          <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />
+                        )}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleSort('grams')}
+                        className="h-auto p-0 font-semibold hover:bg-transparent"
+                      >
+                        Grams
+                        {sortField === 'grams' ? (
+                          sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
+                        ) : (
+                          <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />
+                        )}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleSort('amountPaid')}
+                        className="h-auto p-0 font-semibold hover:bg-transparent"
+                      >
+                        Amount Paid
+                        {sortField === 'amountPaid' ? (
+                          sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
+                        ) : (
+                          <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />
+                        )}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleSort('pricePerGram')}
+                        className="h-auto p-0 font-semibold hover:bg-transparent"
+                      >
+                        Price/Gram
+                        {sortField === 'pricePerGram' ? (
+                          sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
+                        ) : (
+                          <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />
+                        )}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleSort('currentValue')}
+                        className="h-auto p-0 font-semibold hover:bg-transparent"
+                      >
+                        Current Value
+                        {sortField === 'currentValue' ? (
+                          sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
+                        ) : (
+                          <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />
+                        )}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleSort('return')}
+                        className="h-auto p-0 font-semibold hover:bg-transparent"
+                      >
+                        Return
+                        {sortField === 'return' ? (
+                          sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
+                        ) : (
+                          <ChevronsUpDown className="ml-1 h-4 w-4 opacity-50" />
+                        )}
+                      </Button>
+                    </TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {purchases.map((purchase) => {
+                  {sortedPurchases.map((purchase) => {
                     const currentValue = purchase.grams * currentGoldPrice;
                     const returnAmount = currentValue - purchase.amountPaid;
                     const returnPercent = purchase.amountPaid > 0 ? (returnAmount / purchase.amountPaid) * 100 : 0;
