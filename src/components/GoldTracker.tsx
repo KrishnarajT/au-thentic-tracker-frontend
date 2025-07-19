@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { goldPurchaseApi, goldPriceApi } from "@/services/goldApi";
 import { GoldPurchase } from "@/types/gold";
 import { formatCurrency, formatWeight, formatPercentage, CurrencyFormat } from "@/utils/formatters";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Legend } from "recharts";
 import { calculateGoldXIRR } from "@/utils/xirr";
 
 const GoldTracker = () => {
@@ -231,7 +231,7 @@ const GoldTracker = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gold-muted to-background p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="w-full mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div className="text-center space-y-2 flex-1">
@@ -335,7 +335,7 @@ const GoldTracker = () => {
             </CardHeader>
             <CardContent>
               <div className={`text-xl font-bold flex items-center gap-1 ${returnSinceLastInvestment >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {formatCurrency(returnSinceLastInvestment, currencyFormat)}/g
+                {formatCurrency(returnSinceLastInvestment * totalGrams, currencyFormat)}
                 <span className="text-sm">({formatPercentage(returnSinceLastInvestmentPercentage)})</span>
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -433,12 +433,12 @@ const GoldTracker = () => {
 
         {/* Investment Progress Chart */}
         {chartData.length > 0 && (
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle>Investment Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px]">
+              <ChartContainer config={chartConfig} className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
                     <XAxis 
@@ -456,19 +456,22 @@ const GoldTracker = () => {
                         name === "invested" ? "Total Invested" : "Total Returns"
                       ]}
                     />
+                    <Legend />
                     <Line
                       type="monotone"
                       dataKey="invested"
                       stroke="var(--color-invested)"
-                      strokeWidth={2}
+                      strokeWidth={3}
                       dot={{ fill: "var(--color-invested)" }}
+                      name="Total Invested"
                     />
                     <Line
                       type="monotone"
                       dataKey="returns"
                       stroke="var(--color-returns)"
-                      strokeWidth={2}
+                      strokeWidth={3}
                       dot={{ fill: "var(--color-returns)" }}
+                      name="Total Returns"
                     />
                   </LineChart>
                 </ResponsiveContainer>
