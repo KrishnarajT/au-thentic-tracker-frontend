@@ -485,53 +485,93 @@ const GoldTracker = () => {
           </Card>
         </div>
 
-        {/* Investment Progress Chart */}
+        {/* Charts */}
         {chartData.length > 0 && (
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle>Investment Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <XAxis 
-                      dataKey="date" 
-                      tickFormatter={(value) => new Date(value).toLocaleDateString()}
-                    />
-                    <YAxis 
-                      tickFormatter={(value) => formatCurrency(value, currencyFormat)}
-                    />
-                    <ChartTooltip 
-                      content={<ChartTooltipContent />}
-                      labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                      formatter={(value: number, name: string) => [
-                        formatCurrency(value, currencyFormat),
-                        name === "invested" ? "Total Invested" : "Total Returns"
-                      ]}
-                    />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="invested"
-                      stroke="var(--color-invested)"
-                      strokeWidth={3}
-                      dot={{ fill: "var(--color-invested)" }}
-                      name="Total Invested"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="returns"
-                      stroke="var(--color-returns)"
-                      strokeWidth={3}
-                      dot={{ fill: "var(--color-returns)" }}
-                      name="Total Returns"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle>Investment vs Value</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                      />
+                      <YAxis 
+                        tickFormatter={(value) => formatCurrency(value, currencyFormat)}
+                      />
+                      <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                        labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                        formatter={(value: number, name: string) => [
+                          formatCurrency(value, currencyFormat),
+                          name === "invested" ? "Total Invested" : "Investment + Returns"
+                        ]}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="invested"
+                        stroke="var(--color-invested)"
+                        strokeWidth={3}
+                        dot={{ fill: "var(--color-invested)" }}
+                        name="Total Invested"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="var(--color-returns)"
+                        strokeWidth={3}
+                        dot={{ fill: "var(--color-returns)" }}
+                        name="Investment + Returns"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle>Returns Over Time</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                      />
+                      <YAxis 
+                        tickFormatter={(value) => formatCurrency(value, currencyFormat)}
+                      />
+                      <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                        labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                        formatter={(value: number) => [
+                          formatCurrency(value, currencyFormat),
+                          "Total Returns"
+                        ]}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="returns"
+                        stroke="hsl(var(--chart-3))"
+                        strokeWidth={3}
+                        dot={{ fill: "hsl(var(--chart-3))" }}
+                        name="Total Returns"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Add New Purchase */}
