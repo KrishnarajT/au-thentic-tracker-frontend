@@ -563,7 +563,7 @@ const GoldTracker = () => {
                         dataKey="returns"
                         stroke="hsl(var(--chart-3))"
                         strokeWidth={3}
-                        dot={{ fill: "hsl(var(--chart-3))" }}
+                        dot={false}
                         name="Total Returns"
                       />
                     </LineChart>
