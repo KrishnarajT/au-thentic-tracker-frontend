@@ -289,8 +289,10 @@ const GoldTracker = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div className="text-center space-y-2 flex-1">
-            <h1 className="text-4xl font-bold text-foreground">Gold Portfolio Tracker</h1>
-            <p className="text-muted-foreground">Track your gold investments and calculate returns</p>
+            <h1 className="text-5xl font-playfair font-bold text-foreground">
+              <span className="text-gold font-semibold">AU</span>thentic Tracker
+            </h1>
+            <p className="text-muted-foreground font-inter text-lg font-light">Premium gold investment analytics & portfolio management</p>
           </div>
           
           {/* Currency Format Selector */}

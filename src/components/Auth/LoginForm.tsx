@@ -38,7 +38,7 @@ const LoginForm = ({ onToggleMode, isSignup }: LoginFormProps) => {
       if (success) {
         toast({
           title: isSignup ? "Account Created" : "Login Successful",
-          description: `Welcome${isSignup ? ' to Gold Tracker' : ' back'}, ${username}!`,
+          description: `Welcome${isSignup ? ' to Authentic Tracker' : ' back'}, ${username}!`,
         });
       } else {
         toast({
