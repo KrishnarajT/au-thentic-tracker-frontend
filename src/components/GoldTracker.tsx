@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Plus, Trash2, TrendingUp, RefreshCw, Settings, Calendar, Target, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Plus, Trash2, TrendingUp, RefreshCw, Settings, Calendar, Target, ChevronUp, ChevronDown, ChevronsUpDown, Coins, Wallet, DollarSign, TrendingDown, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { goldPurchaseApi, goldPriceApi } from "@/services/goldApi";
 import { GoldPurchase } from "@/types/gold";
@@ -290,7 +290,7 @@ const GoldTracker = () => {
         <div className="flex justify-between items-center">
           <div className="text-center space-y-2 flex-1">
             <h1 className="text-5xl font-playfair font-bold text-foreground">
-              <span className="text-gold font-semibold">AU</span>thentic Tracker
+              <span className="text-gold font-semibold">Au</span>thentic Tracker
             </h1>
             <p className="text-muted-foreground font-inter text-lg font-light">Premium gold investment analytics & portfolio management</p>
           </div>
@@ -320,7 +320,10 @@ const GoldTracker = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-gold/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Gold</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Coins className="w-4 h-4 text-gold" />
+                Total Gold
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gold">{formatWeight(totalGrams)}</div>
@@ -329,7 +332,10 @@ const GoldTracker = () => {
 
           <Card className="border-gold/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Invested</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-primary" />
+                Total Invested
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalInvested, currencyFormat)}</div>
@@ -338,7 +344,10 @@ const GoldTracker = () => {
 
           <Card className="border-gold/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Current Value</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-success" />
+                Current Value
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">{formatCurrency(currentValue, currencyFormat)}</div>
@@ -347,7 +356,10 @@ const GoldTracker = () => {
 
           <Card className="border-gold/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Return</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                {totalReturn >= 0 ? <TrendingUp className="w-4 h-4 text-success" /> : <TrendingDown className="w-4 h-4 text-destructive" />}
+                Total Return
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold flex items-center gap-1 ${totalReturn >= 0 ? 'text-success' : 'text-destructive'}`}>
@@ -405,7 +417,10 @@ const GoldTracker = () => {
 
           <Card className="border-primary/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Portfolio XIRR</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-primary" />
+                Portfolio XIRR
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className={`text-xl font-bold ${totalXIRR >= 0 ? 'text-success' : 'text-destructive'}`}>
