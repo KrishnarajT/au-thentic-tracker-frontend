@@ -18,11 +18,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // OAuth configuration for Authentik
 const AUTHENTIK_CONFIG = {
-  clientId: 'your-client-id', // Replace with your Authentik client ID
+  clientId: 'e8AJ9gM1EK7cpaGuwN1ED9NcJrKemA0U0INoOlpa', // Replace with your Authentik client ID
   redirectUri: window.location.origin + '/auth/callback',
   scope: 'openid profile email',
-  authUrl: 'https://your-authentik-domain.com/application/o/authorize/', // Replace with your Authentik URL
-  tokenUrl: 'https://your-authentik-domain.com/application/o/token/', // Replace with your Authentik URL
+  authUrl: 'https://authentik.krishnarajthadesar.in/application/o/authorize/', // Replace with your Authentik URL
+  tokenUrl: 'https://authentik.krishnarajthadesar.in/application/o/token/', // Replace with your Authentik URL
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
