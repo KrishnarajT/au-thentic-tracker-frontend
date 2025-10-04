@@ -16,41 +16,48 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// OAuth configuration for Authentik
-const AUTHENTIK_CONFIG = {
-  clientId: 'e8AJ9gM1EK7cpaGuwN1ED9NcJrKemA0U0INoOlpa', // Replace with your Authentik client ID
-  redirectUri: window.location.origin + '/auth/callback',
-  scope: 'openid profile email',
-  authUrl: 'https://authentik.krishnarajthadesar.in/application/o/authorize/', // Replace with your Authentik URL
-  tokenUrl: 'https://authentik.krishnarajthadesar.in/application/o/token/', // Replace with your Authentik URL
-};
+// Middleware backend configuration
+const AUTH_API_BASE = 'https://api-get-away.krishnarajthadesar.in';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored session on app load
-    const storedUser = localStorage.getItem('auth_user');
-    
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-
-    // Handle OAuth callback
-    const handleOAuthCallback = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const state = urlParams.get('state');
+    const checkAuthStatus = async () => {
+      // Check for stored session on app load
+      const storedUser = localStorage.getItem('auth_user');
       
-      if (code && state === localStorage.getItem('oauth_state')) {
-        // Exchange code for token
-        exchangeCodeForToken(code);
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        setIsLoading(false);
+        return;
       }
+
+      // Check if user is authenticated via middleware
+      try {
+        const response = await fetch(`${AUTH_API_BASE}/me`, {
+          credentials: 'include', // Include cookies for session
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const userData = {
+            id: data.sub,
+            username: data.name,
+          };
+          
+          setUser(userData);
+          localStorage.setItem('auth_user', JSON.stringify(userData));
+        }
+      } catch (error) {
+        console.log('Not authenticated');
+      }
+
+      setIsLoading(false);
     };
 
-    handleOAuthCallback();
-    setIsLoading(false);
+    checkAuthStatus();
   }, []);
 
   const loginAsGuest = async (): Promise<boolean> => {
@@ -69,68 +76,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const generateOAuthState = () => {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-  };
-
   const loginWithAuthentik = async (): Promise<boolean> => {
     try {
-      const state = generateOAuthState();
-      localStorage.setItem('oauth_state', state);
-      
-      const authUrl = new URL(AUTHENTIK_CONFIG.authUrl);
-      authUrl.searchParams.append('client_id', AUTHENTIK_CONFIG.clientId);
-      authUrl.searchParams.append('redirect_uri', AUTHENTIK_CONFIG.redirectUri);
-      authUrl.searchParams.append('response_type', 'code');
-      authUrl.searchParams.append('scope', AUTHENTIK_CONFIG.scope);
-      authUrl.searchParams.append('state', state);
-      
-      // Redirect to Authentik
-      window.location.href = authUrl.toString();
+      // Redirect to middleware backend for authentication
+      window.location.href = `${AUTH_API_BASE}/auth/login`;
       return true;
     } catch (error) {
-      console.error('OAuth initiation failed:', error);
+      console.error('Login redirect failed:', error);
       return false;
-    }
-  };
-
-  const exchangeCodeForToken = async (code: string) => {
-    try {
-      const response = await fetch(AUTHENTIK_CONFIG.tokenUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          client_id: AUTHENTIK_CONFIG.clientId,
-          code: code,
-          redirect_uri: AUTHENTIK_CONFIG.redirectUri,
-        }),
-      });
-
-      if (response.ok) {
-        const tokenData = await response.json();
-        
-        // Decode JWT to get user info (in production, verify the token!)
-        const payload = JSON.parse(atob(tokenData.access_token.split('.')[1]));
-        const userData = { 
-          id: payload.sub, 
-          username: payload.preferred_username || payload.email || 'Authentik User'
-        };
-        
-        setUser(userData);
-        localStorage.setItem('auth_user', JSON.stringify(userData));
-        localStorage.setItem('access_token', tokenData.access_token);
-        localStorage.removeItem('oauth_state');
-        
-        // Clean up URL
-        window.history.replaceState({}, document.title, '/');
-      } else {
-        console.error('Token exchange failed');
-      }
-    } catch (error) {
-      console.error('Token exchange error:', error);
     }
   };
 
