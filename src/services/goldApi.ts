@@ -23,18 +23,19 @@ export const goldPurchaseApi = {
     try {
       const userId = getUserId();
       const url = userId ? `${API_BASE_URL}/gold-purchases?userId=${userId}` : `${API_BASE_URL}/gold-purchases`;
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
@@ -48,19 +49,20 @@ export const goldPurchaseApi = {
     try {
       const userId = getUserId();
       const purchaseWithUser = userId ? { ...purchase, userId } : purchase;
-      
+
       const response = await fetch(`${API_BASE_URL}/gold-purchases`, {
-        method: 'POST',
+        method: 'POST', 
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(purchaseWithUser),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
@@ -74,19 +76,20 @@ export const goldPurchaseApi = {
     try {
       const userId = getUserId();
       const purchaseWithUser = userId ? { ...purchase, userId } : purchase;
-      
+
       const response = await fetch(`${API_BASE_URL}/gold-purchases/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(purchaseWithUser),
+        credentials: 'include',
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
@@ -103,12 +106,13 @@ export const goldPurchaseApi = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return { success: true };
     } catch (error) {
       console.warn('Failed to delete purchase via API:', error);
@@ -128,8 +132,9 @@ export const goldPriceApi = {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           return { success: true, data: data.pricePerGram };
@@ -137,7 +142,7 @@ export const goldPriceApi = {
       } catch (error) {
         console.warn('Custom gold price API failed, trying fallback:', error);
       }
-      
+
     } catch (error) {
       console.warn('Failed to fetch gold price from API:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -151,14 +156,15 @@ export const goldPriceApi = {
         const targetDate = new Date();
         targetDate.setDate(targetDate.getDate() - daysBack);
         const dateStr = targetDate.toISOString().split('T')[0];
-        
+
         const response = await fetch(`${API_BASE_URL}/gold-price/historical?date=${dateStr}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           return { success: true, data: data.pricePerGram };
@@ -166,7 +172,7 @@ export const goldPriceApi = {
       } catch (error) {
         console.warn('Custom historical gold price API failed:', error);
       }
-      
+
       // For now, return a fallback (you can enhance this with a real historical API)
       return { success: false, error: 'Historical price API not available' };
     } catch (error) {
@@ -184,8 +190,9 @@ export const goldPriceApi = {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           return { success: true, data: data.pricePerGram };
@@ -193,7 +200,7 @@ export const goldPriceApi = {
       } catch (error) {
         console.warn('Custom historical gold price API failed for date:', date, error);
       }
-      
+
       // For now, return a fallback (you can enhance this with a real historical API)
       return { success: false, error: 'Historical price API not available' };
     } catch (error) {
@@ -212,12 +219,13 @@ export const settingsApi = {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
@@ -234,12 +242,13 @@ export const settingsApi = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(settings),
+        credentials: 'include',
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return { success: true };
     } catch (error) {
       console.warn('Failed to update settings via API:', error);
