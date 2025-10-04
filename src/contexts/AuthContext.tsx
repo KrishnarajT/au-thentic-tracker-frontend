@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Check if user is authenticated via middleware
       try {
-        const response = await fetch(`${AUTH_API_BASE}/me`, {
+        const response = await fetch(`${AUTH_API_BASE}/api/me`, {
           credentials: 'include', // Include cookies for session
         });
 
