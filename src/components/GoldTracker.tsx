@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Plus, Trash2, TrendingUp, RefreshCw, Settings, Calendar, Target, ChevronUp, ChevronDown, ChevronsUpDown, Coins, Wallet, DollarSign, TrendingDown, BarChart3 } from "lucide-react";
+import { Plus, Trash2, TrendingUp, RefreshCw, Settings, Calendar, Target, ChevronUp, ChevronDown, ChevronsUpDown, Coins, Wallet, DollarSign, TrendingDown, BarChart3, IndianRupeeIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { goldPurchaseApi, goldPriceApi } from "@/services/goldApi";
 import { GoldPurchase } from "@/types/gold";
@@ -345,7 +345,7 @@ const GoldTracker = () => {
           <Card className="border-gold/20">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-success" />
+                <IndianRupeeIcon className="w-4 h-4 text-success" />
                 Current Value
               </CardTitle>
             </CardHeader>

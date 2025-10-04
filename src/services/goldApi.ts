@@ -2,8 +2,7 @@
 import { GoldPurchase } from '@/types/gold';
 
 // Configuration - update these URLs to point to your NAS backend
-const API_BASE_URL = 'http://your-nas-ip:port/api'; // Update this
-const GOLD_PRICE_API = 'https://api.metals.live/v1/spot/gold'; // Example gold price API
+const API_BASE_URL = 'https://api-get-away.krishnarajthadesar.in/';
 
 // Helper function to get user ID
 const getUserId = () => {
@@ -139,23 +138,6 @@ export const goldPriceApi = {
         console.warn('Custom gold price API failed, trying fallback:', error);
       }
       
-      // Fallback to public API (example - you can replace with your preferred API)
-      const response = await fetch(GOLD_PRICE_API, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      // Convert from per ounce to per gram (assuming API returns per ounce)
-      const pricePerGram = data.price / 31.1035; // 1 ounce = 31.1035 grams
-      
-      return { success: true, data: pricePerGram };
     } catch (error) {
       console.warn('Failed to fetch gold price from API:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
