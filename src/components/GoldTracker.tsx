@@ -28,7 +28,6 @@ const GoldTracker = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [newPurchase, setNewPurchase] = useState({
     grams: "",
-    amountPaid: "",
     date: new Date().toISOString().split('T')[0]
   });
   const { toast } = useToast();
@@ -98,32 +97,46 @@ const GoldTracker = () => {
   };
 
   const addPurchase = async () => {
-    if (!newPurchase.grams || !newPurchase.amountPaid || !newPurchase.date) {
+    if (!newPurchase.grams || !newPurchase.date) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields to add a purchase.",
+        description: "Please fill in grams and date to add a purchase.",
         variant: "destructive"
       });
       return;
     }
 
     const grams = parseFloat(newPurchase.grams);
-    const amountPaid = parseFloat(newPurchase.amountPaid);
     
-    if (grams <= 0 || amountPaid <= 0) {
+    if (grams <= 0) {
       toast({
         title: "Invalid Values",
-        description: "Grams and amount must be positive numbers.",
+        description: "Grams must be a positive number.",
         variant: "destructive"
       });
       return;
     }
 
+    // Fetch gold price for the selected date
+    const priceResult = await goldPriceApi.getPriceAtDate(newPurchase.date);
+    
+    if (!priceResult.success || !priceResult.data) {
+      toast({
+        title: "Price Fetch Failed",
+        description: "Could not fetch gold price for the selected date.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const pricePerGram = priceResult.data;
+    const amountPaid = grams * pricePerGram;
+
     const purchaseData = {
       grams,
       amountPaid,
       date: newPurchase.date,
-      pricePerGram: amountPaid / grams
+      pricePerGram
     };
 
     // Try to save to API first
@@ -134,7 +147,7 @@ const GoldTracker = () => {
       purchase = result.data;
       toast({
         title: "Purchase Saved",
-        description: `Added ${grams}g of gold (saved to server)`,
+        description: `Added ${grams}g of gold at ₹${pricePerGram.toFixed(2)}/g (saved to server)`,
       });
     } else {
       // Fallback to local state
@@ -144,14 +157,13 @@ const GoldTracker = () => {
       };
       toast({
         title: "Purchase Added Locally",
-        description: `Added ${grams}g of gold (server unavailable)`,
+        description: `Added ${grams}g of gold at ₹${pricePerGram.toFixed(2)}/g (server unavailable)`,
       });
     }
 
     setPurchases([...purchases, purchase]);
     setNewPurchase({
       grams: "",
-      amountPaid: "",
       date: new Date().toISOString().split('T')[0]
     });
   };
@@ -597,7 +609,7 @@ const GoldTracker = () => {
             <CardTitle>Add New Purchase</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Grams</label>
                 <Input
@@ -605,17 +617,6 @@ const GoldTracker = () => {
                   step="0.01"
                   value={newPurchase.grams}
                   onChange={(e) => setNewPurchase({...newPurchase, grams: e.target.value})}
-                  placeholder="0.00"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Amount Paid (₹)</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={newPurchase.amountPaid}
-                  onChange={(e) => setNewPurchase({...newPurchase, amountPaid: e.target.value})}
                   placeholder="0.00"
                   className="mt-1"
                 />
